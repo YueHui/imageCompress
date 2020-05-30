@@ -1,0 +1,23 @@
+{
+  "name": "imagecompress",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "./node_modules/.bin/electron-builder build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^9.0.0",
+    "electron-builder": "^22.6.1"
+  },
+  "build": {
+    "appId": "imageCompress",
+    "win": {
+      "target": "portable"
+    }
+  }
+}
