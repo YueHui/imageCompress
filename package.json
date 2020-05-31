@@ -17,7 +17,8 @@
   "build": {
     "appId": "imageCompress",
     "win": {
-      "target": "portable"
+      "target": "portable",
+      "icon": "icon.png"
     }
   },
   "dependencies": {
