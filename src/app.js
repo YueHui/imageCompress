@@ -54,7 +54,7 @@ ipcMain.on("compress",function (e) {
 		baseDir = path.dirname(dataList[0]);
 		savePath = baseDir;
 		dataList.forEach(file=>{
-			compress(file,false,true);
+			compress(file, {cover:false,rename:true});
 		})
 	}
 	// console.log("complete")
@@ -116,14 +116,13 @@ app.on('activate', () => {
  * @param cover 是否覆盖
  * @param rename 重命名
  */
-function compress(file,cover=false,rename=false){
+function compress(file, {cover = false, rename = false,quality=90}){
 	const image = nativeImage.createFromPath(file);
-	const imageData = image.toJPEG(50);
+	const imageData = image.toJPEG(quality);
 
 	if(cover){
 		fs.writeFileSync(file,imageData);
-		// console.log('re process');
-		check(file);
+		check(file,quality-10);
 	}else{
 
 		const relativePath = path.relative(baseDir,file);
@@ -137,7 +136,7 @@ function compress(file,cover=false,rename=false){
 			filePath = `${fileNameObj.dir}/${fileNameObj.name}(压缩副本)${fileNameObj.ext}`;
 		}
 		fs.writeFileSync(filePath,imageData);
-		check(filePath);
+		check(filePath,quality-10);
 	}
 
 
@@ -157,9 +156,9 @@ function compressDir(dirList,parent){
 /**
  * 检查
  */
-function check(file){
+function check(file,quality){
 	const stat = fs.statSync(`${file}`);
 	if(stat.size/1000/1000 >= 1){
-		compress(file,true);
+		compress(file, {cover:true,quality});
 	}
 }
