@@ -5,34 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>图片压缩</title>
     <style>
+        /*#app{zoom: 0.8;}*/
         body{margin: 0; padding: 0;}
-        Button{background:#4395ff; color: #FFF; border: none; padding: 10px 15px; box-shadow: 0 0 5px #999; border-radius: 5px; outline: none; cursor: pointer; font-size: 18px;}
-        #main,#selectContain,#resultContain{width: 100vw; height: 100vh; position: relative;}
+        Button{background:#4395ff; color: #FFF; border: none; padding: 10px 15px; box-shadow: 0 0 5px #999; border-radius: 5px; outline: none; cursor: pointer; font-size: 22px;}
+        #main,#selectContain,#resultContain{width: 100vw; height: 100vh; position: relative; background-size: 100% 100%!important;}
         #main{background: url("images/bg_main.png");}
-        #btn_start{ position: absolute; top: 220px; left: 300px; cursor: pointer;}
+        #btn_start{ position: absolute; top: 220px; left: 300px; cursor: pointer; zoom: 0.8;}
+        #info{position: absolute; top: 20px; right: 20px; cursor: pointer;}
+
         #selectContain{background: url("images/bg_selectResult.png");}
-        #selectDir,#selectImg,#selectResult{
-            background: #cc6159; color: #FFF; left: 350px; top: 200px; position: absolute; width: 300px;
+        #selectDir,#selectImg,#selectDirResult,#selectFileResult{
+            background: #cc6159; color: #FFF; left: 350px; top: 200px; position: absolute; width: 300px; zoom: 0.8;
         }
         #selectImg{
             background: #82c19d; top: 300px;
         }
-        #selectResult{
+        #selectDirResult,#selectFileResult{
             background: #cc6159; top: 250px;
         }
-        #reselect,#compress{
-            position: absolute; top: 350px; left: 300px;
+        #selectFileResult{
+            background: #82c19d;
         }
-        #compress{left: 600px;}
+        #reselect,#compress{
+            position: absolute; top: 350px; left: 350px; zoom: 0.8; color: #c48050; background: transparent; box-shadow: none; border: 1px solid #c48050;
+        }
+        #compress{left: 575px;}
 
         #resultContain{
-            background: url("images/bg_result.png");
+            background: url("images/bg_result.jpg");
         }
         #loading{
-            top: 250px; left: 500px; position: absolute;
+            top: 200px; left: 400px; position: absolute;
         }
+        #loading div{width: 200px; text-align: center; margin-top: 20px; left: -50px; position: relative;}
         #btn_show{
-            top: 250px; left: 400px; position: absolute; cursor: pointer;
+            top: 250px; left: 400px; position: absolute; cursor: pointer; zoom: 0.8;
         }
     </style>
 </head>
@@ -42,19 +49,23 @@
             <div id="btn_start" v-on:click="changePage('select')">
                 <img src="images/btn_start.png" alt="">
             </div>
+            <div id="info" v-on:click="showInfo">
+                <img src="images/info.png" alt="">
+            </div>
         </div>
         <div id="selectContain" v-if="page === 'select'">
             <Button id="selectDir" v-if="select.selectBtn" v-on:click="chooseDir">选择文件夹</Button>
             <Button id="selectImg" v-if="select.selectBtn" v-on:click="chooseImg">选择图片</Button>
 
-            <Button id="selectResult" v-if="select.result.length>0">已选择{{select.result.length}}个文件</Button>
-            <Button id="reselect" v-if="select.result.length>0" v-on:click="chooseDir">重选</Button>
+            <Button id="selectDirResult" v-if="select.result.length>0 && select.type == 'dir'">已选择{{select.result.length}}个文件夹</Button>
+            <Button id="selectFileResult" v-if="select.result.length>0 && select.type == 'file'">已选择{{select.result.length}}张图片</Button>
+            <Button id="reselect" v-if="select.result.length>0" v-on:click="reSelect">重选</Button>
             <Button id="compress" v-if="select.result.length>0" v-on:click="compress">压缩</Button>
         </div>
         <div id="resultContain" v-if="page === 'result'">
             <div id="loading" v-if="result.loading">
                 <img src="images/loading.gif" alt="" width="100">
-                处理中...
+                <div>处理中,请稍后...</div>
             </div>
             <div id="compressResult" v-if="result.complete">
                 <div id="btn_show" v-on:click="showResult">
@@ -92,7 +103,16 @@
                     this.select.result = dirList;
                 },
                 chooseImg(){
-
+                    const file = ipcRenderer.sendSync("chooseFile");
+                    if(!file || file.length == 0) return;
+                    this.select.selectBtn = false;
+                    this.select.type = "file";
+                    this.select.result = file;
+                },
+                reSelect(){
+                    this.select.selectBtn = true;
+                    this.select.type = null;
+                    this.select.result = [];
                 },
                 compress(){
                     this.page = "result";
@@ -100,6 +120,9 @@
                 },
                 showResult(){
                     ipcRenderer.send("showResult");
+                },
+                showInfo(){
+                    ipcRenderer.send("showInfo");
                 }
             }
         });

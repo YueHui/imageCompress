@@ -7,10 +7,11 @@ let win,type='dir',baseDir = '',savePath='',dataList=[];
 
 function createWindow(){
 	win = new BrowserWindow({
-		width:1000,
-        height:800,
+		width:800,
+        height:640,
 		resizable:false,
 		fullscreenable:false,
+		autoHideMenuBar:true,
 		// titleBarStyle:'hidden',
         title:"图片压缩",
 		webPreferences: {
@@ -22,15 +23,23 @@ function createWindow(){
 		win = null
     })
     win.loadFile('./src/index.html');
-	// win.webContents.openDevTools();
+	win.webContents.openDevTools();
 
 }
 
 ipcMain.on("chooseDir",function(event){
 	const result = dialog.showOpenDialogSync(win,{properties:['openDirectory']});
-	console.log(result);
 	if(result){
 		type = "dir";
+		dataList = result;
+	}
+	event.returnValue = result;
+})
+
+ipcMain.on("chooseFile",function(event){
+	const result = dialog.showOpenDialogSync(win,{properties:['openFile']});
+	if(result){
+		type = "file";
 		dataList = result;
 	}
 	event.returnValue = result;
@@ -40,11 +49,13 @@ ipcMain.on("compress",function (e) {
 	if(type == "dir"){
 		console.log(dataList)
 		baseDir = dataList[0];
-		savePath = path.resolve(baseDir,'../压缩图片_'+path.basename(baseDir));
+		savePath = path.resolve(baseDir,'../'+path.basename(baseDir)+'_压缩副本');
 		compressDir(fs.readdirSync(baseDir),baseDir);
 	}else{
+		baseDir = path.dirname(dataList[0]);
+		savePath = baseDir;
 		dataList.forEach(file=>{
-			compress(file);
+			compress(file,false,true);
 		})
 	}
 	// console.log("complete")
@@ -53,6 +64,10 @@ ipcMain.on("compress",function (e) {
 
 ipcMain.on("showResult",function () {
 	shell.openPath(savePath);
+})
+
+ipcMain.on("showInfo",function () {
+
 })
 
 app.on('ready', createWindow);
@@ -78,21 +93,27 @@ app.on('activate', () => {
  * 压缩图片
  * @param file 文件路径
  * @param cover 是否覆盖
+ * @param rename 重命名
  */
-function compress(file,cover=false){
+function compress(file,cover=false,rename=false){
 	const image = nativeImage.createFromPath(file);
 	const imageData = image.toJPEG(50);
 
 	if(cover){
 		fs.writeFileSync(file,imageData);
-		console.log('large');
+		console.log('re process');
 		check(file);
 	}else{
+
 		const relativePath = path.relative(baseDir,file);
-		const filePath = savePath+"/"+relativePath;
+		let filePath = savePath+"/"+relativePath;
 		const basePath = path.dirname(filePath);
 		if(!fs.existsSync(basePath)){
 			fs.mkdirSync(basePath,{recursive:true});
+		}
+		if(rename){
+			const fileNameObj = path.parse(file);
+			filePath = `${fileNameObj.dir}/${fileNameObj.name}(压缩副本)${fileNameObj.ext}`;
 		}
 		fs.writeFileSync(filePath,imageData);
 		check(filePath);
