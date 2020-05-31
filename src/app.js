@@ -4,6 +4,8 @@ const fs = require('fs');
 const path = require('path');
 
 let win,infoWin,type='dir',baseDir = '',savePath='',dataList=[];
+let imgExts = ['.jpg','jpeg','.png','.bmp'];
+
 
 function createWindow(){
 	win = new BrowserWindow({
@@ -62,7 +64,7 @@ ipcMain.on("compress",function (e) {
 })
 
 ipcMain.on("showResult",function () {
-	shell.openPath(savePath);
+	shell.openPath(path.dirname(savePath));
 })
 
 ipcMain.on("showInfo",function () {
@@ -116,7 +118,12 @@ app.on('activate', () => {
  * @param cover 是否覆盖
  * @param rename 重命名
  */
-function compress(file, {cover = false, rename = false,quality=90}){
+function compress(file, {cover = false, rename = false,quality=90}={}){
+	const fileNameObj = path.parse(file);
+	if(!imgExts.includes(fileNameObj.ext.toLocaleLowerCase())){
+		return;
+	}
+
 	const image = nativeImage.createFromPath(file);
 	const imageData = image.toJPEG(quality);
 
@@ -132,7 +139,7 @@ function compress(file, {cover = false, rename = false,quality=90}){
 			fs.mkdirSync(basePath,{recursive:true});
 		}
 		if(rename){
-			const fileNameObj = path.parse(file);
+			
 			filePath = `${fileNameObj.dir}/${fileNameObj.name}(压缩副本)${fileNameObj.ext}`;
 		}
 		fs.writeFileSync(filePath,imageData);
