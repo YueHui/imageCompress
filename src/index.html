@@ -8,14 +8,14 @@
         /*#app{zoom: 0.8;}*/
         body{margin: 0; padding: 0;}
         Button{background:#4395ff; color: #FFF; border: none; padding: 10px 15px; box-shadow: 0 0 5px #999; border-radius: 5px; outline: none; cursor: pointer; font-size: 22px;}
-        #main,#selectContain,#resultContain{width: 100vw; height: 100vh; position: relative; background-size: 100% 100%!important;}
+        #main,#selectContain,#resultContain,#loadingContain{width: 100vw; height: 100vh; position: relative; background-size: 100% 100%!important;}
         #main{background: url("images/bg_main.png");}
         #btn_start{ position: absolute; top: 220px; left: 300px; cursor: pointer; zoom: 0.8;}
         #info{position: absolute; top: 20px; right: 20px; cursor: pointer;}
 
         #selectContain{background: url("images/bg_selectResult.png");}
         #selectDir,#selectImg,#selectDirResult,#selectFileResult{
-            background: #cc6159; color: #FFF; left: 350px; top: 200px; position: absolute; width: 300px; zoom: 0.8;
+            background: #cc6159; color: #FFF; left: 400px; top: 200px; position: absolute; width: 300px; zoom: 0.8;
         }
         #selectImg{
             background: #82c19d; top: 300px;
@@ -27,9 +27,13 @@
             background: #82c19d;
         }
         #reselect,#compress{
-            position: absolute; top: 350px; left: 350px; zoom: 0.8; color: #c48050; background: transparent; box-shadow: none; border: 1px solid #c48050;
+            position: absolute; top: 350px; left: 400px; zoom: 0.8; color: #c48050; background: transparent; box-shadow: none; border: 1px solid #c48050;
         }
-        #compress{left: 575px;}
+        #compress{left: 620px;}
+
+        #loadingContain{
+            background: url("images/bg_loading.png");
+        }
 
         #resultContain{
             background: url("images/bg_result.jpg");
@@ -37,13 +41,17 @@
         #loading{
             top: 200px; left: 400px; position: absolute;
         }
-        #loading div{width: 200px; text-align: center; margin-top: 20px; left: -50px; position: relative;}
+        #loading div{width: 200px; text-align: center; margin-top: 20px; left: -50px; position: relative; color: #cc6159;}
         #btn_show{
             top: 250px; left: 400px; position: absolute; cursor: pointer; zoom: 0.8;
+        }
+        #gohome{
+            position: absolute; right: 20px; top: 20px; cursor: pointer;
         }
     </style>
 </head>
 <body>
+    <img src="images/loading.gif" style="display: none;" alt="">
     <div id="app">
         <div id="main" v-if="page === 'main'">
             <div id="btn_start" v-on:click="changePage('select')">
@@ -62,15 +70,21 @@
             <Button id="reselect" v-if="select.result.length>0" v-on:click="reSelect">重选</Button>
             <Button id="compress" v-if="select.result.length>0" v-on:click="compress">压缩</Button>
         </div>
-        <div id="resultContain" v-if="page === 'result'">
-            <div id="loading" v-if="result.loading">
+        <div id="loadingContain" v-if="page === 'loading'">
+            <div id="loading" >
                 <img src="images/loading.gif" alt="" width="100">
                 <div>处理中,请稍后...</div>
             </div>
+        </div>
+        <div id="resultContain" v-if="page === 'result'">
+            
             <div id="compressResult" v-if="result.complete">
                 <div id="btn_show" v-on:click="showResult">
                     <img src="images/btn_show.png" alt="">
                 </div>
+            </div>
+            <div id="gohome" v-if="result.complete" v-on:click="gohome">
+                <img src="images/gohome.png" alt="" width="80">
             </div>
         </div>
     </div>
@@ -87,8 +101,8 @@
                     result:[]
                 },
                 result:{
-                    loading:true,
-                    complete:false
+                    loading:false,
+                    complete:true
                 }
             },
             methods:{
@@ -115,7 +129,7 @@
                     this.select.result = [];
                 },
                 compress(){
-                    this.page = "result";
+                    this.page = "loading";
                     ipcRenderer.send("compress");
                 },
                 showResult(){
@@ -123,13 +137,18 @@
                 },
                 showInfo(){
                     ipcRenderer.send("showInfo");
+                },
+                gohome(){
+                    this.page = "main"
+                    this.select.selectBtn = true;
+                    this.select.type = null;
+                    this.select.result = [];
                 }
             }
         });
 
         ipcRenderer.on("complete",function () {
-            app.result.loading = false;
-            app.result.complete = true;
+            app.page="result";
         });
     </script>
 </body>
