@@ -3,7 +3,7 @@ const {app,BrowserWindow,ipcMain,dialog,nativeImage,shell} = require("electron")
 const fs = require('fs');
 const path = require('path');
 
-let win,type='dir',baseDir = '',savePath='',dataList=[];
+let win,infoWin,type='dir',baseDir = '',savePath='',dataList=[];
 
 function createWindow(){
 	win = new BrowserWindow({
@@ -23,7 +23,7 @@ function createWindow(){
 		win = null
     })
     win.loadFile('./src/index.html');
-	win.webContents.openDevTools();
+	// win.webContents.openDevTools();
 
 }
 
@@ -47,7 +47,6 @@ ipcMain.on("chooseFile",function(event){
 
 ipcMain.on("compress",function (e) {
 	if(type == "dir"){
-		console.log(dataList)
 		baseDir = dataList[0];
 		savePath = path.resolve(baseDir,'../'+path.basename(baseDir)+'_压缩副本');
 		compressDir(fs.readdirSync(baseDir),baseDir);
@@ -67,7 +66,29 @@ ipcMain.on("showResult",function () {
 })
 
 ipcMain.on("showInfo",function () {
-
+	if(infoWin){
+		infoWin.focus();
+		return;
+	}
+	infoWin = new BrowserWindow({
+		width:1000,
+        height:600,
+		x:100,
+		y:100,
+		resizable:false,
+		fullscreenable:false,
+		autoHideMenuBar:true,
+		// titleBarStyle:'hidden',
+        title:"图片压缩帮助信息",
+		webPreferences: {
+			nodeIntegration: true,
+			webSecurity: false
+		}
+    });
+	infoWin.on('closed', () => {
+		infoWin = null
+    })
+    infoWin.loadFile('./src/info.html');
 })
 
 app.on('ready', createWindow);
@@ -101,7 +122,7 @@ function compress(file,cover=false,rename=false){
 
 	if(cover){
 		fs.writeFileSync(file,imageData);
-		console.log('re process');
+		// console.log('re process');
 		check(file);
 	}else{
 
