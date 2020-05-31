@@ -1,15 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:v-on="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>图片压缩</title>
     <style>
-        Button{background:#4395ff; color: #FFF; border: none; padding: 10px 15px; box-shadow: 0 0 5px #999; border-radius: 5px; outline: none; cursor: pointer;}
+        body{margin: 0; padding: 0;}
+        Button{background:#4395ff; color: #FFF; border: none; padding: 10px 15px; box-shadow: 0 0 5px #999; border-radius: 5px; outline: none; cursor: pointer; font-size: 18px;}
+        #main,#selectContain,#resultContain{width: 100vw; height: 100vh; position: relative;}
+        #main{background: url("images/bg_main.png");}
+        #btn_start{ position: absolute; top: 220px; left: 300px; cursor: pointer;}
+        #selectContain{background: url("images/bg_selectResult.png");}
+        #selectDir,#selectImg,#selectResult{
+            background: #cc6159; color: #FFF; left: 350px; top: 200px; position: absolute; width: 300px;
+        }
+        #selectImg{
+            background: #82c19d; top: 300px;
+        }
+        #selectResult{
+            background: #cc6159; top: 250px;
+        }
+        #reselect,#compress{
+            position: absolute; top: 350px; left: 300px;
+        }
+        #compress{left: 600px;}
+
+        #resultContain{
+            background: url("images/bg_result.png");
+        }
+        #loading{
+            top: 250px; left: 500px; position: absolute;
+        }
+        #btn_show{
+            top: 250px; left: 400px; position: absolute; cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <Button>选择文件</Button>
-    <input type="file" />
+    <div id="app">
+        <div id="main" v-if="page === 'main'">
+            <div id="btn_start" v-on:click="changePage('select')">
+                <img src="images/btn_start.png" alt="">
+            </div>
+        </div>
+        <div id="selectContain" v-if="page === 'select'">
+            <Button id="selectDir" v-if="select.selectBtn" v-on:click="chooseDir">选择文件夹</Button>
+            <Button id="selectImg" v-if="select.selectBtn" v-on:click="chooseImg">选择图片</Button>
+
+            <Button id="selectResult" v-if="select.result.length>0">已选择{{select.result.length}}个文件</Button>
+            <Button id="reselect" v-if="select.result.length>0" v-on:click="chooseDir">重选</Button>
+            <Button id="compress" v-if="select.result.length>0" v-on:click="compress">压缩</Button>
+        </div>
+        <div id="resultContain" v-if="page === 'result'">
+            <div id="loading" v-if="result.loading">
+                <img src="images/loading.gif" alt="" width="100">
+                处理中...
+            </div>
+            <div id="compressResult" v-if="result.complete">
+                <div id="btn_show" v-on:click="showResult">
+                    <img src="images/btn_show.png" alt="">
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="vue.js"></script>
+    <script>
+        const {ipcRenderer} = require("electron");
+        const app = new Vue({
+            el:"#app",
+            data:{
+                page:"main",
+                select:{
+                    selectBtn:true,
+                    type:null,
+                    result:[]
+                },
+                result:{
+                    loading:true,
+                    complete:false
+                }
+            },
+            methods:{
+                changePage(){
+                    this.page="select"
+                },
+                chooseDir(){
+                    const dirList = ipcRenderer.sendSync("chooseDir");
+                    if(!dirList || dirList.length == 0) return;
+                    this.select.selectBtn = false;
+                    this.select.type = "dir";
+                    this.select.result = dirList;
+                },
+                chooseImg(){
+
+                },
+                compress(){
+                    this.page = "result";
+                    ipcRenderer.send("compress");
+                },
+                showResult(){
+                    ipcRenderer.send("showResult");
+                }
+            }
+        });
+
+        ipcRenderer.on("complete",function () {
+            app.result.loading = false;
+            app.result.complete = true;
+        });
+    </script>
 </body>
 </html>
