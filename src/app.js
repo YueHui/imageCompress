@@ -64,7 +64,8 @@ ipcMain.on("compress",function (e) {
 })
 
 ipcMain.on("showResult",function () {
-	shell.openPath(path.dirname(savePath));
+	const rpath = type === "dir" ?path.dirname(savePath):savePath;
+	shell.openPath(rpath);
 })
 
 ipcMain.on("showInfo",function () {
