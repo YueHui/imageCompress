@@ -18,14 +18,15 @@ function createWindow(){
         title:"图片压缩",
 		webPreferences: {
 			nodeIntegration: true,
-			webSecurity: false
+			webSecurity: false,
+			contextIsolation: false
 		}
     });
 	win.on('closed', () => {
 		win = null
     })
     win.loadFile('./src/index.html');
-	// win.webContents.openDevTools();
+	win.webContents.openDevTools();
 
 }
 
@@ -140,7 +141,7 @@ function compress(file, {cover = false, rename = false,quality=90}={}){
 			fs.mkdirSync(basePath,{recursive:true});
 		}
 		if(rename){
-			
+
 			filePath = `${fileNameObj.dir}/${fileNameObj.name}(压缩副本)${fileNameObj.ext}`;
 		}
 		fs.writeFileSync(filePath,imageData);
